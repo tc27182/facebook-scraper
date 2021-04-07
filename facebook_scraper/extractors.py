@@ -27,6 +27,15 @@ PartialPost = Optional[Dict[str, Any]]
 def extract_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
     return PostExtractor(raw_post, options, request_fn).extract_post()
 
+def extract_comment(raw_post: RawPost, options: Options, request_fn: RequestFunction):
+    extracted_post = PostExtractor(raw_post, options, request_fn)
+    post = extracted_post.extract_post()
+    #print("***POST***")
+    #print(post['text'])
+#    ignored = int(input('How many comments to ignore?'))
+    comments = extracted_post.extract_comments_full(ignored=2)
+    comments["post_text"] = post["text"]
+    return comments
 
 def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
     return GroupPostExtractor(raw_post, options, request_fn).extract_post()
@@ -522,12 +531,13 @@ class PostExtractor:
             'available': ">This content isn't available at the moment<" not in self.element.html
         }
 
-    def extract_comments_full(self):
+    def extract_comments_full(self, ignored=0):
         """Fetch comments for an existing post obtained by `get_posts`.
         Note that this method may raise multiple http requests per post to get all comments"""
         url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
         logger.debug(f"Fetching {url}")
         response = self.request(url)
+#        print(response.html)
         comments = list(response.html.find('div[data-sigil="comment"]'))
         more = response.html.find("a", containing="View more comments", first=True)
         while more:
@@ -538,9 +548,11 @@ class PostExtractor:
             comments.extend(more_comments)
             more = response.html.find("a", containing="View more comments", first=True)
         logger.debug(f"Found {len(comments)} comments")
+        print(f"Found {len(comments)} comments")
         result = []
-        for comment in comments:
+        for comment in comments[:len(comments)-ignored]:
             comment_id = comment.attrs.get("id")
+            print(comment.attrs)
             first_link = comment.find("div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil]):not([class])", first=True)
             comment_body_elem = comment.find('[data-sigil="comment-body"]', first=True)
             commenter_meta = None

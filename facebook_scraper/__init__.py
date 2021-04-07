@@ -88,7 +88,8 @@ def get_posts(
         _scraper.login(*credentials)
 
     if account is not None:
-        return _scraper.get_posts(account, **kwargs)
+        return _scraper.get_comments(account, **kwargs)
+        #return _scraper.get_posts(account, **kwargs)
 
     elif group is not None:
         return _scraper.get_group_posts(group, **kwargs)

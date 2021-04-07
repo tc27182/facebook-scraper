@@ -9,7 +9,7 @@ from requests_html import HTMLSession
 
 from . import utils
 from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL
-from .extractors import extract_group_post, extract_post
+from .extractors import extract_group_post, extract_post, extract_comment
 from .fb_types import Post
 from .page_iterators import iter_group_pages, iter_pages
 
@@ -46,6 +46,10 @@ class FacebookScraper:
         iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
+    def get_comments(self, account: str, **kwargs) -> Iterator[Post]:
+        iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get)
+        return self._generic_get_posts(extract_comment, iter_pages_fn, **kwargs)
+    
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
         for post_url in post_urls:
             if post_url.startswith(FB_BASE_URL):
